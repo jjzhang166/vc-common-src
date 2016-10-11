@@ -1,7 +1,7 @@
 /*
  * Copyright: JessMA Open Source (ldcsaa@gmail.com)
  *
- * Version	: 2.3.14
+ * Version	: 2.3.15
  * Author	: Bruce Liang
  * Website	: http://www.jessma.org
  * Project	: https://github.com/ldcsaa
@@ -426,7 +426,9 @@ public:
 	typedef T*							TPTR;
 	typedef volatile T*					VTPTR;
 
-	typedef unordered_set<index_type>	IndexSet;
+	typedef unordered_set<index_type>			IndexSet;
+	typedef typename IndexSet::const_iterator	IndexSetCI;
+	typedef typename IndexSet::iterator			IndexSetI;
 
 	static TPTR const E_EMPTY;
 	static TPTR const E_LOCKED;
@@ -488,7 +490,7 @@ public:
 		ASSERT(dwIndex < m_dwSize);
 		ASSERT(ppElement != nullptr);
 
-		if((dwIndex >= m_dwSize))
+		if(dwIndex >= m_dwSize)
 		{
 			*ppElement = nullptr;
 			return FALSE;
@@ -587,7 +589,7 @@ public:
 	
 	BOOL GetAllElementIndexes(index_type ids[], DWORD& dwCount, BOOL bCopy = TRUE)
 	{
-		if(ids == nullptr)
+		if(ids == nullptr || dwCount == 0)
 		{
 			dwCount = Elements();
 			return FALSE;
@@ -604,10 +606,10 @@ public:
 		BOOL isOK	 = FALSE;
 		DWORD dwSize = (DWORD)pIndexes->size();
 
-		if(dwSize <= dwCount)
+		if(dwSize > 0 && dwSize <= dwCount)
 		{
-			IndexSet::const_iterator it  = pIndexes->begin();
-			IndexSet::const_iterator end = pIndexes->end();
+			IndexSetCI it  = pIndexes->begin();
+			IndexSetCI end = pIndexes->end();
 
 			for(int i = 0; it != end; ++it, ++i)
 			{
@@ -639,8 +641,8 @@ public:
 		{
 			ids.reset(new index_type[dwCount]);
 
-			IndexSet::const_iterator it  = pIndexes->begin();
-			IndexSet::const_iterator end = pIndexes->end();
+			IndexSetCI it  = pIndexes->begin();
+			IndexSetCI end = pIndexes->end();
 
 			for(int i = 0; it != end; ++it, ++i)
 			{
@@ -672,7 +674,7 @@ private:
 		m_dwSize	= dwSize;
 		m_pv		= (VTPTR*)malloc(m_dwSize * sizeof(TPTR));
 
-		::memset(m_pv, (int)E_EMPTY, m_dwSize * sizeof(TPTR));
+		::ZeroMemory(m_pv, m_dwSize * sizeof(TPTR));
 	}
 
 	void Destroy()
@@ -948,7 +950,7 @@ private:
 		m_dwSize = dwSize;
 		m_pv	 = (VTPTR*)malloc(m_dwSize * sizeof(TPTR));
 
-		::memset(m_pv, (int)E_EMPTY, m_dwSize * sizeof(TPTR));
+		::ZeroMemory(m_pv, m_dwSize * sizeof(TPTR));
 	}
 
 	void Destroy()
@@ -1040,6 +1042,17 @@ public:
 		::InterlockedIncrement(&m_lSize);
 	}
 
+	void UnsafePushBack(T* pVal)
+	{
+		ASSERT(pVal != nullptr);
+
+		NPTR pNode		= new Node(pVal);
+		m_pTail->pNext	= pNode;
+		m_pTail			= pNode;
+		
+		::InterlockedIncrement(&m_lSize);
+	}
+
 	BOOL PopFront(T** ppVal)
 	{
 		ASSERT(ppVal != nullptr);
@@ -1079,6 +1092,35 @@ public:
 		}
 
 		return isOK;
+	}
+
+	BOOL UnsafePopFront(T** ppVal)
+	{
+		if(!UnsafePeekFront(ppVal))
+			return FALSE;
+
+		NPTR pHead	= (NPTR)m_pHead;
+		NPTR pNext	= (NPTR)pHead->pNext;
+		m_pHead		= pNext;
+
+		::InterlockedDecrement(&m_lSize);
+
+		delete pHead;
+		return TRUE;
+	}
+
+	BOOL UnsafePeekFront(T** ppVal)
+	{
+		ASSERT(ppVal != nullptr);
+
+		NPTR pNext = (NPTR)m_pHead->pNext;
+
+		if(pNext == nullptr)
+			return FALSE;
+
+		*ppVal = pNext->pValue;
+
+		return TRUE;
 	}
 
 public:

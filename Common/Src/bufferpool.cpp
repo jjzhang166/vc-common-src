@@ -1,7 +1,7 @@
 /*
  * Copyright: JessMA Open Source (ldcsaa@gmail.com)
  *
- * Version	: 2.3.14
+ * Version	: 2.3.15
  * Author	: Bruce Liang
  * Website	: http://www.jessma.org
  * Project	: https://github.com/ldcsaa
@@ -343,7 +343,7 @@ void CBufferPool::ReleaseGCBuffer(BOOL bForce)
 
 	while(m_lsGCBuffer.PopFront(&pBuffer))
 	{
-		if(bForce || (now - pBuffer->freeTime) >= m_dwBufferLockTime)
+		if(bForce || (int)(now - pBuffer->freeTime) >= (int)m_dwBufferLockTime)
 			TBuffer::Destruct(pBuffer);
 		else
 		{
