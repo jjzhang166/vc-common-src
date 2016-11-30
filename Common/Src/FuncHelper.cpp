@@ -1,7 +1,7 @@
 /*
  * Copyright: JessMA Open Source (ldcsaa@gmail.com)
  *
- * Version	: 2.3.15
+ * Version	: 2.3.16
  * Author	: Bruce Liang
  * Website	: http://www.jessma.org
  * Project	: https://github.com/ldcsaa
@@ -951,14 +951,11 @@ CString SecondToTimeStr(DWORD dwSeconds, BOOL bDayOnly)
 
 BOOL GetRegistryValue(HKEY hRoot, LPCTSTR wcSubKey, LPCTSTR wcName, LPBYTE pValue, DWORD* pdwSize, DWORD* pdwType)
 {
-	DWORD result = ERROR_INVALID_DATA;
-
 	CRegKey reg;
+	DWORD result = reg.Open(hRoot, wcSubKey, KEY_READ);
 
-	result = reg.Create(hRoot, wcSubKey, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_READ);
-	if(result  == ERROR_SUCCESS)
+	if(result == ERROR_SUCCESS)
 		result = reg.QueryValue(wcName, pdwType, pValue, pdwSize);
-	
 
 	BOOL isOK = (result == ERROR_SUCCESS);
 
@@ -974,12 +971,10 @@ BOOL GetRegistryValue(HKEY hRoot, LPCTSTR wcSubKey, LPCTSTR wcName, LPBYTE pValu
 
 BOOL SetRegistryValue(HKEY hRoot, LPCTSTR wcSubKey, LPCTSTR wcName, LPBYTE pValue, DWORD dwSize, DWORD dwType)
 {
-	DWORD result = ERROR_INVALID_DATA;
-
 	CRegKey reg;
+	DWORD result = reg.Create(hRoot, wcSubKey);
 
-	result = reg.Create(hRoot, wcSubKey);
-	if(result  == ERROR_SUCCESS)
+	if(result == ERROR_SUCCESS)
 		result = reg.SetValue(wcName, dwType, pValue, dwSize);
 
 	return (result == ERROR_SUCCESS);
