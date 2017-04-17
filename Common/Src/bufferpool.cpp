@@ -373,10 +373,10 @@ TBuffer* CBufferPool::PickFreeBuffer(ULONG_PTR dwID)
 	if(m_lsFreeBuffer.TryLock(&pBuffer, dwIndex))
 	{
 		if(::GetTimeGap32(pBuffer->freeTime) >= m_dwBufferLockTime)
-			m_lsFreeBuffer.ReleaseLock(nullptr, dwIndex);
+			VERIFY(m_lsFreeBuffer.ReleaseLock(nullptr, dwIndex));
 		else
 		{
-			m_lsFreeBuffer.ReleaseLock(pBuffer, dwIndex);
+			VERIFY(m_lsFreeBuffer.ReleaseLock(pBuffer, dwIndex));
 			pBuffer = nullptr;
 		}
 	}
